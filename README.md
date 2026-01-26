@@ -1,6 +1,6 @@
-# PhilexScholarV2 - Scholarship Management System
+# KoaScholarships - Scholarship Management System
 
-PhilexScholarV2 is a comprehensive, modern web application designed to streamline the management of educational scholarships. It provides a seamless experience for students to find and apply for scholarships, while offering administrators robust tools to manage programs, review applications, verify documents, and process disbursements.
+KoaScholarships is a comprehensive, modern web application designed to streamline the management of educational scholarships. It provides a seamless experience for students to find and apply for scholarships, while offering administrators robust tools to manage programs, review applications, verify documents, and process disbursements.
 
 Built with **Laravel** and **React (via Inertia.js)**, this project combines a powerful backend with a reactive, modern frontend interface.
 
@@ -145,7 +145,7 @@ Key entities include:
 
 ## 🤝 How to Contribute
 
-We welcome contributions to improve PhilexScholarV2!
+We welcome contributions to improve KoaScholarships!
 
 ### Development Standards
 *   **Code Style**: We use Laravel Pint for PHP and Prettier for JS/TS.
