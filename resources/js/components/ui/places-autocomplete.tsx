@@ -2,20 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle } from 'lucide-react';
+import mapboxgl from 'mapbox-gl';
+import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 
-// Force the Google Maps API to load only the Places library, without Maps
-declare global {
-  interface Window {
-    initGooglePlacesOnly?: () => void;
-  }
-}
+import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 
 type PlacesAutocompleteProps = {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  onPlaceSelect?: (place: google.maps.places.PlaceResult) => void;
+  onPlaceSelect?: (place: MapboxPlaceResult) => void;
   className?: string;
   icon?: React.ReactNode;
   tooltipContent?: React.ReactNode;
@@ -26,7 +23,35 @@ type PlacesAutocompleteProps = {
   disabled?: boolean;
 };
 
-// Component for Google Places Autocomplete
+export interface MapboxPlaceResult {
+  id: string;
+  place_name: string;
+  text: string;
+  address?: string;
+  context?: MapboxContext[];
+  geometry: {
+    type: string;
+    coordinates: [number, number];
+  };
+  place_type: string[];
+}
+
+export interface MapboxContext {
+  id: string;
+  text: string;
+  short_code?: string;
+  wikidata?: string;
+}
+
+const googleToMapboxTypes: Record<string, string[]> = {
+  '(regions)': ['region', 'place'],
+  'locality': ['place', 'locality'],
+  'administrative_area_level_1': ['region'],
+  'administrative_area_level_2': ['district', 'place'],
+  'address': ['address', 'place', 'poi'],
+  'establishment': ['poi', 'place'],
+};
+
 export function PlacesAutocomplete({
   label,
   value,
@@ -36,133 +61,142 @@ export function PlacesAutocomplete({
   className,
   icon,
   tooltipContent,
-  componentRestrictions = { country: 'ph' }, // Default to Philippines
+  componentRestrictions = { country: 'ph' },
   types = ['(regions)', 'locality', 'administrative_area_level_1', 'administrative_area_level_2'],
   error,
   required = false,
   disabled = false,
 }: PlacesAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+  const geocoderInstanceRef = useRef<InstanceType<typeof MapboxGeocoder> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState(value);
 
-  // Initialize Google Places Autocomplete
   useEffect(() => {
-    if (!inputRef.current || !window.google) return;
-    
-    // Create the autocomplete instance
-    const autocompleteInstance = new google.maps.places.Autocomplete(inputRef.current, {
-      componentRestrictions,
-      types,
-      fields: ['address_components', 'formatted_address', 'name', 'geometry'],
-    });
-    
-    // Set the autocomplete instance
-    setAutocomplete(autocompleteInstance);
+    const accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+    if (accessToken) {
+      mapboxgl.accessToken = accessToken;
+    }
+  }, []);
 
-    // Add listener for place changes
-    const listener = autocompleteInstance.addListener('place_changed', () => {
-      const place = autocompleteInstance.getPlace();
-      if (!place || !place.address_components) return;
+  const getMapboxTypes = (): string[] => {
+    const mapboxTypes: string[] = [];
+    types.forEach(type => {
+      const mapped = googleToMapboxTypes[type];
+      if (mapped) {
+        mapboxTypes.push(...mapped);
+      }
+    });
+    return [...new Set(mapboxTypes)];
+  };
+
+  useEffect(() => {
+    if (!containerRef.current || !mapboxgl.accessToken) return;
+
+    const mapboxTypes = getMapboxTypes();
+    const countries = Array.isArray(componentRestrictions.country) 
+      ? componentRestrictions.country 
+      : [componentRestrictions.country];
+
+    const geocoder = new MapboxGeocoder({
+      accessToken: mapboxgl.accessToken,
+      types: mapboxTypes.length > 0 ? mapboxTypes.join(',') : undefined,
+      countries: countries.join(','),
+      placeholder: placeholder || 'Search for a location',
+      limit: 5,
+      minLength: 2,
+      fuzzyMatch: true,
+      routing: false,
+    });
+
+    geocoderInstanceRef.current = geocoder;
+
+    if (containerRef.current) {
+      containerRef.current.innerHTML = '';
+      const mockMap = {} as mapboxgl.Map;
+      containerRef.current.appendChild(geocoder.onAdd(mockMap));
       
-      // Extract the most appropriate component based on the field type
-      if (types.includes('(regions)') || types.includes('administrative_area_level_1')) {
-        // For province field - find province/region component
-        const provinceComponent = place.address_components.find(component => 
-          component.types.includes('administrative_area_level_1')
-        );
+      const geocoderInput = containerRef.current.querySelector('.mapboxgl-ctrl-geocoder input');
+      if (geocoderInput) {
+        geocoderInput.className = 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
+        (geocoderInput as HTMLInputElement).value = inputValue;
+        (geocoderInput as HTMLInputElement).disabled = disabled;
         
-        if (provinceComponent) {
-          setInputValue(provinceComponent.long_name);
-          onChange(provinceComponent.long_name);
+        geocoderInput.addEventListener('input', (e) => {
+          const target = e.target as HTMLInputElement;
+          setInputValue(target.value);
+          onChange(target.value);
+        });
+      }
+    }
+
+    geocoder.on('result', (event: { result: MapboxPlaceResult }) => {
+      const result = event.result;
+      let selectedValue = '';
+      
+      if (types.includes('(regions)') || types.includes('administrative_area_level_1')) {
+        const regionContext = result.context?.find(ctx => ctx.id.startsWith('region.'));
+        if (regionContext) {
+          selectedValue = regionContext.text;
+        } else if (result.place_type.includes('region')) {
+          selectedValue = result.text;
         } else {
-          setInputValue(place.name || '');
-          onChange(place.name || '');
+          selectedValue = result.place_name || result.text;
         }
       } else if (types.includes('locality') || types.includes('administrative_area_level_2')) {
-        // For city/municipality field
-        const cityComponent = place.address_components.find(component => 
-          component.types.includes('locality') || 
-          component.types.includes('administrative_area_level_2') ||
-          component.types.includes('sublocality_level_1')
-        );
-        
-        if (cityComponent) {
-          setInputValue(cityComponent.long_name);
-          onChange(cityComponent.long_name);
+        const placeContext = result.context?.find(ctx => ctx.id.startsWith('place.'));
+        if (placeContext) {
+          selectedValue = placeContext.text;
+        } else if (result.place_type.includes('place')) {
+          selectedValue = result.text;
         } else {
-          setInputValue(place.name || '');
-          onChange(place.name || '');
+          selectedValue = result.place_name || result.text;
         }
       } else if (types.includes('address') || types.includes('establishment')) {
-        // For street address - use the full address or route component
-        const streetNumber = place.address_components.find(component => 
-          component.types.includes('street_number')
-        );
-        
-        const route = place.address_components.find(component => 
-          component.types.includes('route')
-        );
-        
-        const sublocality = place.address_components.find(component => 
-          component.types.includes('sublocality') || 
-          component.types.includes('neighborhood')
-        );
-        
-        let formattedAddress = '';
-        
-        // Build address with number + street + neighborhood if available
-        if (streetNumber) formattedAddress += streetNumber.long_name + ' ';
-        if (route) formattedAddress += route.long_name;
-        if (sublocality && formattedAddress) formattedAddress += ', ' + sublocality.long_name;
-        
-        // If we couldn't build a good address, use the formatted_address but trim city/province
-        if (!formattedAddress && place.formatted_address) {
-          // Try to remove city, province, and postal code from the end
-          const cityComponent = place.address_components.find(component => 
-            component.types.includes('locality') || 
-            component.types.includes('administrative_area_level_2')
-          );
-          
-          if (cityComponent && place.formatted_address.includes(cityComponent.long_name)) {
-            formattedAddress = place.formatted_address.split(cityComponent.long_name)[0].trim();
-            // Remove trailing comma if any
-            formattedAddress = formattedAddress.replace(/,\s*$/, '');
-          } else {
-            formattedAddress = place.formatted_address;
-          }
+        if (result.address) {
+          selectedValue = `${result.address} ${result.text}`;
+        } else {
+          const parts = result.place_name?.split(',');
+          selectedValue = parts ? parts[0].trim() : result.text;
         }
-        
-        setInputValue(formattedAddress || place.name || '');
-        onChange(formattedAddress || place.name || '');
       } else {
-        // For any other type of field, use the formatted name
-        setInputValue(place.name || '');
-        onChange(place.name || '');
+        selectedValue = result.place_name || result.text;
       }
-      
+
+      setInputValue(selectedValue);
+      onChange(selectedValue);
+
       if (onPlaceSelect) {
-        onPlaceSelect(place);
+        onPlaceSelect(result);
       }
     });
 
-    // Cleanup
+    geocoder.on('clear', () => {
+      setInputValue('');
+      onChange('');
+    });
+
     return () => {
-      if (google.maps.event && listener) {
-        google.maps.event.removeListener(listener);
+      if (geocoderInstanceRef.current) {
+        geocoderInstanceRef.current.off('result', () => {});
+        geocoderInstanceRef.current.off('clear', () => {});
       }
     };
-  }, [window.google, types, componentRestrictions]);
+  }, [mapboxgl.accessToken, types, componentRestrictions, placeholder, disabled]);
 
-  // Handle user input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
     onChange(e.target.value);
   };
 
-  // Sync input value with passed value prop
   useEffect(() => {
     setInputValue(value);
+    if (containerRef.current) {
+      const geocoderInput = containerRef.current.querySelector('.mapboxgl-ctrl-geocoder input') as HTMLInputElement;
+      if (geocoderInput && geocoderInput.value !== value) {
+        geocoderInput.value = value;
+      }
+    }
   }, [value]);
 
   return (
@@ -172,6 +206,7 @@ export function PlacesAutocomplete({
         {label}
         {tooltipContent}
       </Label>
+      <div ref={containerRef} className="mapbox-geocoder-container" />
       <Input
         id={label.replace(/\s+/g, '-').toLowerCase()}
         ref={inputRef}
@@ -180,6 +215,7 @@ export function PlacesAutocomplete({
         placeholder={placeholder}
         disabled={disabled}
         required={required}
+        className="hidden"
       />
       {error && (
         <div className="text-sm text-red-500 flex items-center gap-1">

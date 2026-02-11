@@ -1,17 +1,23 @@
 // @ts-ignore - Ignoring type errors for SharedData
-import { type SharedData } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { ApplicationProcess } from '@/components/landing/ApplicationProcess';
+import { FAQSection } from '@/components/landing/FAQSection';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { ScholarshipPrograms } from '@/components/landing/ScholarshipPrograms';
-import { EligibilitySection } from '@/components/landing/EligibilitySection';
-import { ApplicationProcess } from '@/components/landing/ApplicationProcess';
 import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
-import { FAQSection } from '@/components/landing/FAQSection';
-import { CTASection } from '@/components/landing/CTASection';
-import { StatsSection } from '@/components/landing/StatsSection';
 import { Button } from '@/components/ui/button';
+import { type SharedData } from '@/types';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { GraduationCapIcon, MenuIcon, XIcon } from 'lucide-react';
 import { useState } from 'react';
+
+const brandName = import.meta.env.VITE_BRAND_NAME || import.meta.env.VITE_APP_NAME || 'Scholarships';
+const brandMetaDescription =
+    import.meta.env.VITE_BRAND_META_DESCRIPTION ||
+    `${brandName} provides financial support to high school and college students. Apply now for academic funding and mentorship opportunities.`;
+const brandSupportEmail = import.meta.env.VITE_BRAND_SUPPORT_EMAIL || 'hello@example.com';
+const brandSupportPhone = import.meta.env.VITE_BRAND_SUPPORT_PHONE || '';
+const brandAddress = import.meta.env.VITE_BRAND_ADDRESS || '';
+const brandCopyrightHolder = import.meta.env.VITE_BRAND_COPYRIGHT_HOLDER || brandName;
 
 export default function Welcome() {
     const { auth } = usePage<SharedData>().props;
@@ -28,15 +34,15 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title="Philex Scholarships - Invest in Your Future">
+            <Head title={`${brandName} - Invest in Your Future`}>
                 <link rel="preconnect" href="https://fonts.bunny.net" />
                 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
-                <meta name="description" content="Philex Scholarships provides financial support to high school and college students. Apply now for academic funding and mentorship opportunities." />
+                <meta name="description" content={brandMetaDescription} />
             </Head>
 
-            <div className="flex min-h-screen flex-col bg-background">
+            <div className="bg-background flex min-h-screen flex-col">
                 {/* Navigation */}
-                <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b">
+                <header className="bg-background/80 fixed top-0 right-0 left-0 z-50 border-b backdrop-blur-sm">
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex h-16 items-center justify-between">
                             {/* Logo */}
@@ -45,17 +51,17 @@ export default function Welcome() {
                                     <div className="bg-primary text-primary-foreground flex aspect-square h-8 items-center justify-center rounded-md">
                                         <GraduationCapIcon className="h-5 w-5" />
                                     </div>
-                                    <span className="font-semibold text-lg">Philex Scholarships</span>
+                                    <span className="text-lg font-semibold">{brandName}</span>
                                 </Link>
                             </div>
 
                             {/* Desktop Navigation */}
-                            <nav className="hidden md:flex items-center space-x-6">
+                            <nav className="hidden items-center space-x-6 md:flex">
                                 {navItems.map((item) => (
                                     <a
                                         key={item.name}
                                         href={item.href}
-                                        className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                                        className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
                                     >
                                         {item.name}
                                     </a>
@@ -63,24 +69,18 @@ export default function Welcome() {
                             </nav>
 
                             {/* Auth Buttons */}
-                            <div className="hidden md:flex items-center space-x-4">
+                            <div className="hidden items-center space-x-4 md:flex">
                                 {auth.user ? (
                                     <Button asChild>
-                                        <Link href={route('dashboard')}>
-                                            Dashboard
-                                        </Link>
+                                        <Link href={route('dashboard')}>Dashboard</Link>
                                     </Button>
                                 ) : (
                                     <>
                                         <Button asChild variant="outline">
-                                            <Link href={route('login')}>
-                                                Log in
-                                            </Link>
+                                            <Link href={route('login')}>Log in</Link>
                                         </Button>
                                         <Button asChild>
-                                            <Link href={route('register')}>
-                                                Register
-                                            </Link>
+                                            <Link href={route('register')}>Register</Link>
                                         </Button>
                                     </>
                                 )}
@@ -88,17 +88,8 @@ export default function Welcome() {
 
                             {/* Mobile menu button */}
                             <div className="md:hidden">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                    aria-label="Toggle menu"
-                                >
-                                    {mobileMenuOpen ? (
-                                        <XIcon className="h-6 w-6" />
-                                    ) : (
-                                        <MenuIcon className="h-6 w-6" />
-                                    )}
+                                <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
+                                    {mobileMenuOpen ? <XIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
                                 </Button>
                             </div>
                         </div>
@@ -106,36 +97,30 @@ export default function Welcome() {
 
                     {/* Mobile menu */}
                     {mobileMenuOpen && (
-                        <div className="md:hidden border-t">
-                            <div className="container mx-auto px-4 py-3 space-y-1">
+                        <div className="border-t md:hidden">
+                            <div className="container mx-auto space-y-1 px-4 py-3">
                                 {navItems.map((item) => (
                                     <a
                                         key={item.name}
                                         href={item.href}
-                                        className="block py-2 text-base font-medium text-muted-foreground hover:text-foreground"
+                                        className="text-muted-foreground hover:text-foreground block py-2 text-base font-medium"
                                         onClick={() => setMobileMenuOpen(false)}
                                     >
                                         {item.name}
                                     </a>
                                 ))}
-                                <div className="pt-4 pb-2 border-t border-border mt-2">
+                                <div className="border-border mt-2 border-t pt-4 pb-2">
                                     {auth.user ? (
                                         <Button asChild className="w-full">
-                                            <Link href={route('dashboard')}>
-                                                Dashboard
-                                            </Link>
+                                            <Link href={route('dashboard')}>Dashboard</Link>
                                         </Button>
                                     ) : (
                                         <div className="flex flex-col space-y-3">
                                             <Button asChild variant="outline" className="w-full">
-                                                <Link href={route('login')}>
-                                                    Log in
-                                                </Link>
+                                                <Link href={route('login')}>Log in</Link>
                                             </Button>
                                             <Button asChild className="w-full">
-                                                <Link href={route('register')}>
-                                                    Register
-                                                </Link>
+                                                <Link href={route('register')}>Register</Link>
                                             </Button>
                                         </div>
                                     )}
@@ -158,30 +143,28 @@ export default function Welcome() {
                 </main>
 
                 {/* Footer */}
-                <footer className="bg-muted py-12 border-t">
+                <footer className="bg-muted border-t py-12">
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
                             <div className="md:col-span-2">
-                                <Link href="/" className="flex items-center space-x-2 mb-4">
+                                <Link href="/" className="mb-4 flex items-center space-x-2">
                                     <div className="bg-primary text-primary-foreground flex aspect-square h-8 items-center justify-center rounded-md">
                                         <GraduationCapIcon className="h-5 w-5" />
                                     </div>
-                                    <span className="font-semibold text-lg">Philex Scholarships</span>
+                                    <span className="text-lg font-semibold">{brandName}</span>
                                 </Link>
-                                <p className="text-sm text-muted-foreground max-w-md">
-                                    Philex Scholarships is dedicated to supporting academic excellence and community engagement through comprehensive scholarship programs for high school and college students.
+                                <p className="text-muted-foreground max-w-md text-sm">
+                                    {brandName} is dedicated to supporting academic excellence and community engagement through comprehensive
+                                    scholarship programs for high school and college students.
                                 </p>
                             </div>
 
                             <div>
-                                <h3 className="font-medium mb-3">Quick Links</h3>
+                                <h3 className="mb-3 font-medium">Quick Links</h3>
                                 <ul className="space-y-2 text-sm">
                                     {navItems.map((item) => (
                                         <li key={item.name}>
-                                            <a
-                                                href={item.href}
-                                                className="text-muted-foreground hover:text-foreground transition-colors"
-                                            >
+                                            <a href={item.href} className="text-muted-foreground hover:text-foreground transition-colors">
                                                 {item.name}
                                             </a>
                                         </li>
@@ -190,20 +173,24 @@ export default function Welcome() {
                             </div>
 
                             <div>
-                                <h3 className="font-medium mb-3">Contact</h3>
-                                <ul className="space-y-2 text-sm text-muted-foreground">
-                                    <li>Email: support@philexscholarships.com</li>
-                                    <li>Phone: (123) 456-7890</li>
-                                    <li>Address: 123 Education Ave, Academic City</li>
+                                <h3 className="mb-3 font-medium">Contact</h3>
+                                <ul className="text-muted-foreground space-y-2 text-sm">
+                                    <li>Email: {brandSupportEmail}</li>
+                                    {brandSupportPhone && <li>Phone: {brandSupportPhone}</li>}
+                                    {brandAddress && <li>Address: {brandAddress}</li>}
                                 </ul>
 
                                 <div className="mt-6">
-                                    <h3 className="font-medium mb-3">Follow Us</h3>
+                                    <h3 className="mb-3 font-medium">Follow Us</h3>
                                     <div className="flex space-x-4">
                                         <a href="#" className="text-muted-foreground hover:text-foreground">
                                             <span className="sr-only">Facebook</span>
                                             <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
+                                                <path
+                                                    fillRule="evenodd"
+                                                    d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"
+                                                    clipRule="evenodd"
+                                                />
                                             </svg>
                                         </a>
                                         <a href="#" className="text-muted-foreground hover:text-foreground">
@@ -215,7 +202,11 @@ export default function Welcome() {
                                         <a href="#" className="text-muted-foreground hover:text-foreground">
                                             <span className="sr-only">Instagram</span>
                                             <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path fillRule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clipRule="evenodd" />
+                                                <path
+                                                    fillRule="evenodd"
+                                                    d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z"
+                                                    clipRule="evenodd"
+                                                />
                                             </svg>
                                         </a>
                                     </div>
@@ -223,8 +214,10 @@ export default function Welcome() {
                             </div>
                         </div>
 
-                        <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-                            <p>© {new Date().getFullYear()} Philex Scholarships. All rights reserved.</p>
+                        <div className="border-border text-muted-foreground mt-8 border-t pt-8 text-center text-sm">
+                            <p>
+                                © {new Date().getFullYear()} {brandCopyrightHolder}. All rights reserved.
+                            </p>
                         </div>
                     </div>
                 </footer>

@@ -1,5 +1,7 @@
 import AppLogoIcon from './app-logo-icon';
 
+const brandLogoText = import.meta.env.VITE_BRAND_LOGO_TEXT || import.meta.env.VITE_APP_NAME || 'Scholarship';
+
 export default function AppLogo() {
     return (
         <>
@@ -7,7 +9,7 @@ export default function AppLogo() {
                 <AppLogoIcon className="size-5" />
             </div>
             <div className="ml-1 grid flex-1 text-left text-sm">
-                <span className="mb-0.5 truncate leading-none font-semibold">PhilexScholar</span>
+                <span className="mb-0.5 truncate leading-none font-semibold">{brandLogoText}</span>
             </div>
         </>
     );
